@@ -1,10 +1,9 @@
 from flask import Flask
 import os
-
-from flask_sqlalchemy import SQLAlchemy
-from src.auth import auth
 from src.bookmarks import bookmarks
 from src.database import db
+from src.auth import auth
+
 
 
 
@@ -26,6 +25,8 @@ def create_app(test_config=None):
     db.init_app(app)
     app.register_blueprint(auth)
     app.register_blueprint(bookmarks)
+
+
 
 
 
