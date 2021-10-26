@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, jsonify
 import os
+from werkzeug.utils import redirect
 from src.bookmarks import bookmarks
-from src.database import db
+from src.database import Bookmark, db
 from src.auth import auth
 from flask_jwt_extended import JWTManager
 
@@ -29,6 +30,23 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth)
     app.register_blueprint(bookmarks)
+
+    @app.get('/<short_url>')
+    def redirect_to_url(short_url):
+        bookmark = Bookmark.query.filter_by(short_url=short_url).first_or_404()
+
+        if bookmark:
+            bookmark.visits=bookmark.visits+1
+            db.session.commit()
+            return redirect(bookmark.url)
+
+    @app.errorhandler(404)
+    def handle_404(e):
+        return jsonify({'error':'Not found'}), 404
+
+    @app.errorhandler(500)
+    def handle_500(e):
+        return jsonify({'error':'Something went wrong, Please try after some time'}), 500
 
 
 
