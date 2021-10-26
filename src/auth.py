@@ -1,10 +1,11 @@
 from os import access
 from flask import Blueprint, request
 from flask.json import jsonify
+from flask_jwt_extended.utils import get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 import validators
 from src.database import User, db
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required
 
 
 auth = Blueprint("auth",__name__,url_prefix="/api/v1/auth")
@@ -83,3 +84,28 @@ def login():
             }), 200
 
     return jsonify({'error':"wrong credentials"}), 401
+
+
+
+@auth.get('/me')
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+
+    user = User.query.filter_by(id=user_id).first()
+
+    return jsonify({
+        'username':user.username,
+        'email': user.email
+    }), 200
+
+
+@auth.get('/token/refresh')
+@jwt_required(refresh=True)
+def refresh_user_token():
+    identity = get_jwt_identity()
+    access = create_access_token(identity=identity)
+
+    return jsonify({
+        'access': access
+    }), 200
